@@ -2,3 +2,20 @@
 /.env
 /.env.local
 /.env.*.local
+# Configuración local
+config/db.php
+config/db pro.php
+
+# Logs
+*.log
+
+# Archivos temporales
+*.tmp
+*.cache
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Configuración de VS Code
+.vscode/
