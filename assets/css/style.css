@@ -1,0 +1,830 @@
+/* ================================================================
+   Georol Theme — V 1.0 Alpha 1 | Compilación 260517
+   Design System: Dark-First, Modern, Premium — Glassmorphism
+================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ── Variables ── */
+:root {
+    --bg-primary:    #f0f4ff;
+    --bg-secondary:  #e8eef8;
+    --bg-tertiary:   #dde5f3;
+    --text-primary:  #1a2027;
+    --text-secondary:#57606a;
+    --border-color:  rgba(180,195,230,0.6);
+    --shadow-sm:     0 2px 8px rgba(80,100,160,.08);
+    --shadow:        0 8px 32px rgba(80,100,160,.14);
+    --shadow-lg:     0 16px 48px rgba(80,100,160,.22);
+    --card-bg:       rgba(255,255,255,0.65);
+    --navbar-bg:     rgba(240,244,255,0.75);
+    --input-bg:      rgba(255,255,255,0.8);
+    --input-border:  rgba(180,195,230,0.7);
+    --accent:        #0d6efd;
+    --accent-glow:   rgba(13,110,253,0.18);
+    --radius:        12px;
+    --radius-lg:     18px;
+    /* Glass */
+    --glass-blur:    16px;
+    --glass-sat:     180%;
+    --glass-border:  rgba(255,255,255,0.45);
+    --glass-bg:      rgba(255,255,255,0.55);
+    /* Mesh orbs */
+    --orb1: radial-gradient(ellipse at 15% 20%, rgba(99,179,237,.35) 0%, transparent 55%);
+    --orb2: radial-gradient(ellipse at 85% 75%, rgba(167,139,250,.28) 0%, transparent 55%);
+    --orb3: radial-gradient(ellipse at 50% 95%, rgba(52,211,153,.20) 0%, transparent 50%);
+}
+
+[data-bs-theme="dark"] {
+    --bg-primary:    #090e1a;
+    --bg-secondary:  #0f1629;
+    --bg-tertiary:   #172038;
+    --text-primary:  #e6edf3;
+    --text-secondary:#8b949e;
+    --border-color:  rgba(48,60,80,0.7);
+    --shadow-sm:     0 2px 8px rgba(0,0,0,.4);
+    --shadow:        0 8px 32px rgba(0,0,0,.6);
+    --shadow-lg:     0 16px 48px rgba(0,0,0,.8);
+    --card-bg:       rgba(15,22,41,0.65);
+    --navbar-bg:     rgba(9,14,26,0.80);
+    --input-bg:      rgba(15,22,41,0.7);
+    --input-border:  rgba(48,60,80,0.8);
+    --accent-glow:   rgba(88,166,255,0.15);
+    --glass-border:  rgba(255,255,255,0.08);
+    --glass-bg:      rgba(15,22,41,0.55);
+    /* Mesh orbs dark */
+    --orb1: radial-gradient(ellipse at 15% 20%, rgba(56,189,248,.12) 0%, transparent 55%);
+    --orb2: radial-gradient(ellipse at 85% 75%, rgba(167,139,250,.12) 0%, transparent 55%);
+    --orb3: radial-gradient(ellipse at 50% 95%, rgba(52,211,153,.08) 0%, transparent 50%);
+}
+
+/* ── Base ── */
+*, *::before, *::after {
+    box-sizing: border-box;
+    transition: background-color .25s ease, border-color .25s ease, color .15s ease;
+}
+
+html { scroll-behavior: smooth; }
+
+/* ── Animated mesh background ── */
+body {
+    background-color: var(--bg-primary);
+    background-image: var(--orb1), var(--orb2), var(--orb3);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 0.925rem;
+    line-height: 1.6;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Utility */
+.fw-500 { font-weight: 500 !important; }
+
+
+/* ================================================================
+   PAGE BACKGROUND BLUR LAYER
+   Fixed div behind everything — set backgroundImage via JS
+   with the flag URL for per-page colored blur.
+================================================================ */
+.page-bg-layer {
+    position: fixed;
+    /* Extend beyond viewport to hide blur edge artifacts */
+    inset: -80px;
+    z-index: -2;
+    background-color: var(--bg-primary);
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    /* Heavy blur — makes any image look like an ambient glow */
+    filter: blur(80px) saturate(1.8) brightness(0.9);
+    opacity: 0;
+    transition: background-image .8s ease, opacity 1s ease;
+    pointer-events: none;
+    will-change: filter, opacity;
+}
+
+/* When an image is set, reveal it */
+.page-bg-layer.active {
+    opacity: 0.28;
+}
+
+/* Dark mode: slightly more opacity for contrast */
+[data-bs-theme="dark"] .page-bg-layer.active {
+    opacity: 0.18;
+    filter: blur(80px) saturate(1.4) brightness(0.5);
+}
+
+/* Gradient overlay on top of the blurred bg to keep readability */
+.page-bg-layer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        160deg,
+        var(--bg-primary) 0%,
+        transparent 40%,
+        transparent 60%,
+        var(--bg-primary) 100%
+    );
+    pointer-events: none;
+}
+
+/* Slow floating orb animation */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(ellipse 600px 500px at 10% 15%, rgba(99,179,237,.15) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 80%, rgba(167,139,250,.13) 0%, transparent 70%);
+    animation: meshDrift 18s ease-in-out infinite alternate;
+}
+
+[data-bs-theme="dark"] body::before {
+    background:
+        radial-gradient(ellipse 600px 500px at 10% 15%, rgba(56,189,248,.07) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 400px at 90% 80%, rgba(167,139,250,.07) 0%, transparent 70%);
+}
+
+@keyframes meshDrift {
+    0%   { transform: translate(0,0) scale(1); }
+    50%  { transform: translate(30px,-20px) scale(1.05); }
+    100% { transform: translate(-20px,30px) scale(.97); }
+}
+
+/* All content above the pseudo layer */
+nav, main, .container, .container-fluid, footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* ================================================================
+   NAVBAR — redesign premium
+================================================================ */
+.navbar {
+    background: var(--navbar-bg) !important;
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: 0 1px 0 var(--glass-border), var(--shadow);
+    padding: 0 0;
+    min-height: 56px;
+}
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-primary) !important;
+    font-weight: 800;
+    font-size: 1.15rem;
+    letter-spacing: -0.3px;
+    padding: 10px 0;
+    text-decoration: none;
+}
+
+.navbar-brand .brand-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #0d6efd, #6610f2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 1rem;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(13,110,253,.35);
+}
+
+.navbar-brand .brand-version {
+    font-size: 0.6rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    padding: 1px 6px;
+    border-radius: 20px;
+    letter-spacing: .4px;
+    align-self: center;
+    white-space: nowrap;
+}
+
+/* Nav separator visual */
+.navbar .nav-section-divider {
+    width: 1px;
+    height: 20px;
+    background: var(--border-color);
+    margin: 0 6px;
+    align-self: center;
+    display: inline-block;
+}
+
+.navbar .nav-link {
+    color: var(--text-secondary) !important;
+    font-size: 0.855rem;
+    font-weight: 500;
+    padding: 16px 10px !important;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: color .15s ease;
+}
+
+.navbar .nav-link i { font-size: 0.95rem; }
+
+.navbar .nav-link:hover {
+    color: var(--text-primary) !important;
+}
+
+.navbar .nav-link.active-link {
+    color: var(--accent) !important;
+    font-weight: 600;
+}
+
+.navbar .nav-link.active-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 10px; right: 10px;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+}
+
+/* Badge especiales en nav */
+.nav-badge-admin {
+    font-size: 0.58rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #dc3545, #b02a37);
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: .3px;
+}
+.nav-badge-gm {
+    font-size: 0.58rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: linear-gradient(135deg, #0d6efd, #0a58ca);
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Dropdown mejorado */
+.dropdown-menu {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,.1);
+    padding: 6px;
+    min-width: 190px;
+    margin-top: 6px !important;
+}
+
+.dropdown-item {
+    color: var(--text-primary);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    padding: 6px 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.dropdown-divider { border-color: var(--border-color); margin: 4px 0; }
+
+/* User button en navbar */
+.navbar .user-btn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary) !important;
+    cursor: pointer;
+    text-decoration: none;
+    transition: box-shadow .2s ease, border-color .2s ease, background .2s ease;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1);
+}
+.navbar .user-btn:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow), inset 0 1px 0 rgba(255,255,255,.15);
+    background: rgba(255,255,255,.12);
+}
+.navbar .user-avatar {
+    width: 26px; height: 26px;
+    background: linear-gradient(135deg, #0d6efd 0%, #6f42c1 100%);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: .75rem; font-weight: 700;
+    flex-shrink: 0;
+}
+/* Real avatar photo in navbar */
+.navbar .user-avatar-img {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,.25);
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+}
+
+.navbar-toggler {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 4px 8px;
+}
+
+[data-bs-theme="dark"] .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(230,237,243,.75)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* ================================================================
+   CARDS
+================================================================ */
+.card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.12);
+    transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: var(--shadow), 0 0 0 1px var(--accent-glow);
+    border-color: rgba(13,110,253,.25);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--glass-border);
+    font-weight: 600;
+    padding: .75rem 1rem;
+}
+
+/* ── Stat cards (index) ── */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    /* shimmer on hover */
+}
+
+.stat-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,.12) 50%, transparent 60%);
+    transform: translateX(-100%);
+    transition: transform .55s ease;
+    pointer-events: none;
+}
+
+.stat-card:hover::after {
+    transform: translateX(100%);
+}
+
+.stat-card .stat-icon {
+    width: 52px; height: 52px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.stat-card .stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+.stat-card .stat-label { font-size: .78rem; color: var(--text-secondary); font-weight: 500; margin-top: 2px; }
+
+/* Turno hero */
+.turno-hero {
+    background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    color: #fff;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(13,110,253,.4), inset 0 1px 0 rgba(255,255,255,.2);
+}
+.turno-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%; right: -20%;
+    width: 280px; height: 280px;
+    background: rgba(255,255,255,.07);
+    border-radius: 50%;
+    filter: blur(20px);
+}
+.turno-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40%; left: -15%;
+    width: 200px; height: 200px;
+    background: rgba(102,16,242,.3);
+    border-radius: 50%;
+    filter: blur(30px);
+    pointer-events: none;
+}
+.turno-hero .turno-number {
+    font-size: 4rem; font-weight: 800; line-height: 1;
+    letter-spacing: -2px;
+}
+.turno-hero .turno-label { font-size: .85rem; opacity: .75; font-weight: 500; }
+
+/* Quick-access cards (panels) */
+.panel-card {
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,.1);
+    transition: box-shadow .25s ease, transform .25s ease, border-color .25s ease;
+    overflow: hidden;
+    height: 100%;
+    position: relative;
+}
+.panel-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+    pointer-events: none;
+}
+.panel-card:hover {
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(13,110,253,.2);
+    transform: translateY(-3px);
+    border-color: rgba(13,110,253,.2);
+}
+.panel-card .panel-header {
+    padding: .75rem 1rem;
+    font-weight: 700;
+    font-size: .8rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.panel-card .panel-body { padding: .75rem 1rem 1rem; }
+.panel-card .panel-body .btn {
+    font-size: .8rem;
+    font-weight: 600;
+    padding: .3rem .7rem;
+    border-radius: 6px;
+}
+
+/* ================================================================
+   FORMS & INPUTS
+================================================================ */
+.form-control, .form-select {
+    background: var(--input-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--input-border);
+    color: var(--text-primary);
+    border-radius: 8px;
+    font-size: .875rem;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.04);
+}
+
+.form-control:focus, .form-select:focus {
+    background: var(--input-bg);
+    border-color: var(--accent);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px var(--accent-glow), inset 0 1px 2px rgba(0,0,0,.04);
+}
+
+.form-label { color: var(--text-secondary); font-weight: 500; font-size: .85rem; }
+
+/* ================================================================
+   TABLES
+================================================================ */
+.table {
+    color: var(--text-primary);
+    --bs-table-bg: transparent;
+    --bs-table-hover-bg: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+.table thead { background-color: var(--bg-tertiary); border-bottom: 2px solid var(--border-color); }
+.table td, .table th { padding: .6rem .85rem; vertical-align: middle; }
+
+/* ================================================================
+   BUTTONS
+================================================================ */
+.btn { transition: all .15s ease; border-radius: 7px; font-weight: 500; font-size: .875rem; }
+.btn:active { transform: scale(.97); }
+
+/* ================================================================
+   BADGES
+================================================================ */
+.badge { font-weight: 600; letter-spacing: .3px; }
+
+/* ================================================================
+   ALERTS
+================================================================ */
+.alert { border-radius: var(--radius); border: 1px solid var(--border-color); }
+
+/* ================================================================
+   FOOTER
+================================================================ */
+.site-footer {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+    border-top: 1px solid var(--glass-border);
+    box-shadow: 0 -1px 0 var(--glass-border);
+    padding: 1.25rem 0;
+    margin-top: 3rem;
+}
+
+/* ── Modal blur ── */
+.modal-content {
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,.1);
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-footer {
+    border-top: 1px solid var(--glass-border);
+    background: rgba(255,255,255,.03);
+}
+
+.modal-backdrop {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    background: rgba(0,0,0,.4) !important;
+    opacity: 1 !important;
+}
+
+/* ── Alert blur ── */
+.alert {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius);
+}
+
+/* ── List groups ── */
+.list-group-item {
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-color: var(--glass-border);
+    color: var(--text-primary);
+}
+
+.list-group-item:hover {
+    background: rgba(13,110,253,.06);
+}
+
+/* ── Theme toggle blur ── */
+.theme-toggle {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--glass-border) !important;
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.15) !important;
+}
+
+/* ── Badge glow ── */
+.badge {
+    font-weight: 600;
+    letter-spacing: .3px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.15);
+}
+.site-footer .footer-brand {
+    font-weight: 700;
+    font-size: .9rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.site-footer small { font-size: .78rem; color: var(--text-secondary); }
+.footer-version-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    letter-spacing: .3px;
+}
+
+/* ================================================================
+   THEME TOGGLE
+================================================================ */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px; right: 20px;
+    z-index: 1050;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+.theme-toggle:hover { transform: scale(1.08); box-shadow: var(--shadow-lg); }
+
+/* ================================================================
+   MISC / UTILS
+================================================================ */
+.login-container { max-width: 420px; margin: 0 auto; }
+.suspended { opacity: .5; background: rgba(220,53,69,.07) !important; }
+a { text-decoration: none; color: inherit; }
+a:hover { text-decoration: none; }
+
+input[type="number"] { -moz-appearance: textfield; }
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* Animated entrance */
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp .35s ease both; }
+
+/* Countries table */
+.country-row { transition: background .15s ease; }
+.flag-thumb { width: 40px; height: 27px; object-fit: cover; border-radius: 4px; border: 1px solid var(--border-color); }
+.flag-placeholder {
+    width: 40px; height: 27px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: .7rem;
+}
+
+@media (max-width: 992px) {
+    .navbar .nav-link { padding: 10px 8px !important; }
+    .navbar .nav-section-divider { display: none; }
+}
+@media (max-width: 768px) {
+    .turno-hero .turno-number { font-size: 3rem; }
+    .stat-card .stat-value { font-size: 1.6rem; }
+}
+
+/* ================================================================
+   FLAG COLOR DYNAMIC SYSTEM
+   CSS variables set by JS (color-extract.js).
+   Fallbacks = default accent blue.
+================================================================ */
+:root {
+    --flag-h:            216;
+    --flag-s:            80%;
+    --flag-l:            45%;
+    --flag-color:        hsl(216, 80%, 45%);
+    --flag-color-light:  hsl(216, 80%, 67%);
+    --flag-color-dim:    hsla(216, 80%, 45%, 0.13);
+    --flag-color-glow:   hsla(216, 80%, 45%, 0.30);
+    --flag-color-border: hsla(216, 80%, 45%, 0.40);
+}
+
+/* ── Country page: themed elements ── */
+
+/* Hero de la cartilla — usa color de bandera */
+.flag-hero {
+    background: linear-gradient(
+        135deg,
+        var(--flag-color) 0%,
+        hsl(var(--flag-h), var(--flag-s), calc(var(--flag-l) - 12%)) 100%
+    ) !important;
+    box-shadow: 0 8px 32px var(--flag-color-glow),
+                inset 0 1px 0 rgba(255,255,255,.2);
+    transition: background .6s ease, box-shadow .6s ease;
+}
+
+/* Borde lateral de color en cards */
+.flag-border-left {
+    border-left: 3px solid var(--flag-color) !important;
+    transition: border-color .5s ease;
+}
+
+/* Glow sutil al card/panel cuando tiene color de bandera */
+.flag-glow {
+    box-shadow: 0 0 0 1px var(--flag-color-border),
+                0 8px 32px var(--flag-color-dim),
+                inset 0 1px 0 rgba(255,255,255,.1) !important;
+    border-color: var(--flag-color-border) !important;
+    transition: box-shadow .5s ease, border-color .5s ease;
+}
+
+/* Tinte de fondo muy sutil */
+.flag-tint {
+    background: linear-gradient(
+        160deg,
+        var(--flag-color-dim) 0%,
+        transparent 60%
+    ) !important;
+    transition: background .5s ease;
+}
+
+/* Badge con color de bandera */
+.flag-badge {
+    background-color: var(--flag-color) !important;
+    color: #fff !important;
+    box-shadow: 0 2px 8px var(--flag-color-glow);
+    transition: background-color .5s ease;
+}
+
+/* Botón outline con color de bandera */
+.flag-btn-outline {
+    border-color: var(--flag-color) !important;
+    color: var(--flag-color) !important;
+    transition: all .3s ease;
+}
+.flag-btn-outline:hover {
+    background: var(--flag-color) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 16px var(--flag-color-glow);
+}
+
+/* Texto con color de bandera */
+.flag-text { color: var(--flag-color) !important; }
+
+/* ── Index: per-row country color ──
+   Applied via inline style on <tr> from JS:
+   tr.style.setProperty('--flag-color', ...)
+   Each row is independently scoped via CSS custom property inheritance.
+── */
+.country-row {
+    --flag-color:        hsl(216,80%,45%);
+    --flag-color-dim:    hsla(216,80%,45%,0.08);
+    --flag-color-border: hsla(216,80%,45%,0.35);
+    transition: background .2s ease;
+}
+
+.country-row:hover {
+    background: var(--flag-color-dim) !important;
+}
+
+.country-row .flag-dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--flag-color);
+    box-shadow: 0 0 6px var(--flag-color-glow);
+    flex-shrink: 0;
+}
+
+/* Left-border accent per row */
+.country-row td:first-child {
+    border-left: 3px solid var(--flag-color-border);
+    transition: border-color .4s ease;
+}
+
+/* ── Animated transition when color loads ── */
+.flag-color-ready {
+    transition:
+        --flag-color .6s ease,
+        border-color .6s ease,
+        box-shadow .6s ease,
+        background .6s ease;
+}
