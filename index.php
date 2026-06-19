@@ -201,6 +201,9 @@ $rm = $role_meta[$role_id] ?? ['color' => 'secondary', 'icon' => 'person', 'labe
                         <a href="enfoques.php" class="btn btn-outline-secondary btn-sm">
                             <i class="bi bi-crosshair2"></i> Enfoques
                         </a>
+                        <a href="polymarket.php" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-graph-up-arrow"></i> Polymarket
+                        </a>
                         <?php if ($role_id == 4): ?>
                         <a href="profile_history.php" class="btn btn-outline-info btn-sm">
                             <i class="bi bi-clock-history"></i> Historial
@@ -259,6 +262,7 @@ $rm = $role_meta[$role_id] ?? ['color' => 'secondary', 'icon' => 'person', 'labe
                         <a href="gm_dashboard.php" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left-right"></i> Asignar Países</a>
                         <a href="gm_turnos.php"    class="btn btn-outline-primary btn-sm"><i class="bi bi-calendar-event"></i> Turnos</a>
                         <a href="gm_research.php"  class="btn btn-outline-primary btn-sm"><i class="bi bi-lightbulb"></i> Investigaciones</a>
+                        <a href="polymarket.php"   class="btn btn-outline-primary btn-sm"><i class="bi bi-graph-up-arrow"></i> Polymarket</a>
                     </div>
                 </div>
             </div>
@@ -289,17 +293,17 @@ $rm = $role_meta[$role_id] ?? ['color' => 'secondary', 'icon' => 'person', 'labe
 
         <!-- Panel Polymarket -->
         <div class="col-sm-6 col-xl-3">
-            <div class="panel-card" style="opacity:.7">
+            <div class="panel-card">
                 <div class="panel-header" style="background:linear-gradient(135deg,#ffc107,#d39e00);color:#000">
                     <i class="bi bi-graph-up-arrow"></i> Polymarket
-                    <span class="ms-auto badge bg-dark" style="font-size:.6rem">Próx.</span>
+                    <span class="ms-auto badge bg-success" style="font-size:.6rem">Activo</span>
                 </div>
-                <div class="panel-body text-center py-4">
-                    <i class="bi bi-lock-fill text-muted mb-2" style="font-size:2rem;display:block"></i>
+                <div class="panel-body text-center py-3">
+                    <i class="bi bi-graph-up text-warning mb-2" style="font-size:2rem;display:block"></i>
                     <p class="text-muted small mb-2">Mercado de predicciones sobre eventos del georol</p>
-                    <button class="btn btn-warning btn-sm w-100" disabled>
-                        <i class="bi bi-hourglass-split"></i> En Desarrollo
-                    </button>
+                    <a href="polymarket.php" class="btn btn-warning btn-sm w-100 fw-600">
+                        <i class="bi bi-box-arrow-in-right"></i> Entrar
+                    </a>
                 </div>
             </div>
         </div>

@@ -114,6 +114,13 @@ $avatar_bust    = ($has_avatar && !$is_external_avatar) ? '?v=' . filemtime(__DI
                     </a>
                 </li>
 
+                <li class="nav-item">
+                    <a class="nav-link <?= $current_page === 'polymarket.php' ? 'active-link' : '' ?>"
+                       href="polymarket.php">
+                        <i class="bi bi-graph-up-arrow"></i> Polymarket
+                    </a>
+                </li>
+
                 <!-- Documentos del sitio -->
                 <li class="nav-item">
                     <a class="nav-link <?= $current_page === 'reglas.php' ? 'active-link' : '' ?>"
@@ -168,6 +175,12 @@ $avatar_bust    = ($has_avatar && !$is_external_avatar) ? '?v=' . filemtime(__DI
                         <i class="bi bi-file-earmark-text"></i> Documentos
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link <?= $current_page === 'gm_polymarket.php' ? 'active-link' : '' ?>"
+                       href="gm_polymarket.php">
+                        <i class="bi bi-graph-up-arrow"></i> GM Polymarket
+                    </a>
+                </li>
                 <?php endif; ?>
 
                 <!-- ─ Separador Admin ─ -->
@@ -204,6 +217,11 @@ $avatar_bust    = ($has_avatar && !$is_external_avatar) ? '?v=' . filemtime(__DI
                         <li>
                             <a class="dropdown-item" href="gm_documentos.php">
                                 <i class="bi bi-file-earmark-text"></i> Documentos
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="polymarket.php">
+                                <i class="bi bi-graph-up-arrow"></i> Polymarket
                             </a>
                         </li>
                     </ul>

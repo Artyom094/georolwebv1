@@ -887,3 +887,335 @@ function getTurnHistory($conn, $id_pais, $limit = 50) {
         return [];
     }
 }
+
+/**
+ * Ensure Polymarket tables exist.
+ */
+function ensurePolymarketTables(PDO $conn) {
+    $conn->exec("CREATE TABLE IF NOT EXISTS markets (
+        id_market int NOT NULL AUTO_INCREMENT,
+        titulo varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
+        descripcion text COLLATE utf8mb4_unicode_ci,
+        categoria varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+        fecha_cierre datetime NOT NULL,
+        estado enum('abierto','silencioso','cerrado','resuelto','cancelado') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'abierto',
+        apuesta_minima_ic int NOT NULL DEFAULT '1',
+        alianzas_ven_apuestas tinyint(1) NOT NULL DEFAULT '0',
+        alianza_info_publica text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        cierre_silencioso_minutos int NOT NULL DEFAULT '0',
+        id_opcion_ganadora int DEFAULT NULL,
+        id_usuario_creador int NOT NULL,
+        id_usuario_resuelve int DEFAULT NULL,
+        fecha_creacion timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        fecha_actualizacion timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        fecha_cierre_real datetime DEFAULT NULL,
+        fecha_resolucion datetime DEFAULT NULL,
+        snapshot_silencioso_json longtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        PRIMARY KEY (id_market),
+        KEY idx_markets_estado (estado),
+        KEY idx_markets_cierre (fecha_cierre),
+        KEY idx_markets_categoria (categoria)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $conn->exec("CREATE TABLE IF NOT EXISTS market_options (
+        id_option int NOT NULL AUTO_INCREMENT,
+        id_market int NOT NULL,
+        titulo varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
+        descripcion text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        orden int NOT NULL DEFAULT '0',
+        fecha_creacion timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_option),
+        UNIQUE KEY uniq_market_option (id_market, titulo),
+        KEY idx_market_options_market (id_market)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $conn->exec("CREATE TABLE IF NOT EXISTS market_bets (
+        id_bet int NOT NULL AUTO_INCREMENT,
+        id_market int NOT NULL,
+        id_option int NOT NULL,
+        id_usuario int NOT NULL,
+        ic_apostado int NOT NULL,
+        estado enum('pendiente','validada','rechazada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pendiente',
+        observaciones text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        validado_por int DEFAULT NULL,
+        validado_en datetime DEFAULT NULL,
+        fecha_apuesta timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_bet),
+        UNIQUE KEY uniq_market_user_bet (id_market, id_usuario),
+        KEY idx_market_bets_market (id_market),
+        KEY idx_market_bets_option (id_option),
+        KEY idx_market_bets_estado (estado)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $conn->exec("CREATE TABLE IF NOT EXISTS market_suggestions (
+        id_suggestion int NOT NULL AUTO_INCREMENT,
+        id_usuario int NOT NULL,
+        titulo varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
+        descripcion text COLLATE utf8mb4_unicode_ci,
+        categoria varchar(60) COLLATE utf8mb4_unicode_ci NOT NULL,
+        fecha_cierre datetime DEFAULT NULL,
+        apuesta_minima_ic int NOT NULL DEFAULT '1',
+        alianzas_ven_apuestas tinyint(1) NOT NULL DEFAULT '0',
+        alianza_info_publica text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        cierre_silencioso_minutos int NOT NULL DEFAULT '0',
+        opciones_json longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+        estado enum('pendiente','aprobada','rechazada') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pendiente',
+        id_market int DEFAULT NULL,
+        revisado_por int DEFAULT NULL,
+        revisado_en datetime DEFAULT NULL,
+        observaciones text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        fecha_creacion timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_suggestion),
+        KEY idx_market_suggestions_estado (estado),
+        KEY idx_market_suggestions_user (id_usuario)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $conn->exec("CREATE TABLE IF NOT EXISTS market_results (
+        id_result int NOT NULL AUTO_INCREMENT,
+        id_market int NOT NULL,
+        id_bet int NOT NULL,
+        id_usuario int NOT NULL,
+        id_option int NOT NULL,
+        apuesta_ic int NOT NULL,
+        pozo_total_ic int NOT NULL,
+        pozo_ganador_ic int NOT NULL,
+        multiplicador decimal(12,4) NOT NULL DEFAULT '0.0000',
+        ganancia_ic int NOT NULL DEFAULT '0',
+        ganancia_neta_ic int NOT NULL DEFAULT '0',
+        opcion_ganadora_titulo varchar(180) COLLATE utf8mb4_unicode_ci NOT NULL,
+        turno_global int DEFAULT NULL,
+        fecha_resolucion timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_result),
+        UNIQUE KEY uniq_market_bet_result (id_bet),
+        KEY idx_market_results_market (id_market),
+        KEY idx_market_results_user (id_usuario),
+        KEY idx_market_results_turno (turno_global)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $conn->exec("CREATE TABLE IF NOT EXISTS market_reputation (
+        id_reputation int NOT NULL AUTO_INCREMENT,
+        id_usuario int NOT NULL,
+        mercados_participados int NOT NULL DEFAULT '0',
+        mercados_ganados int NOT NULL DEFAULT '0',
+        mercados_perdidos int NOT NULL DEFAULT '0',
+        total_ic_apostado int NOT NULL DEFAULT '0',
+        total_ic_ganado int NOT NULL DEFAULT '0',
+        precision_pct decimal(5,2) NOT NULL DEFAULT '0.00',
+        fecha_actualizacion timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id_reputation),
+        UNIQUE KEY uniq_market_reputation_user (id_usuario)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+/**
+ * Translate consensus percentage into a readable label.
+ */
+function marketConsensusLabel($consensus) {
+    $consensus = max(0, min(100, intval($consensus)));
+    if ($consensus < 20) return 'Muy Bajo';
+    if ($consensus < 40) return 'Bajo';
+    if ($consensus < 60) return 'Medio';
+    if ($consensus < 80) return 'Alto';
+    return 'Muy Alto';
+}
+
+/**
+ * Classify a bet size by its weight in the market.
+ */
+function marketWhaleTier($betAmount, $totalAmount) {
+    $betAmount = intval($betAmount);
+    $totalAmount = intval($totalAmount);
+
+    if ($totalAmount <= 0) {
+        return '🐟 Pequeños';
+    }
+
+    $share = ($betAmount / $totalAmount) * 100;
+    if ($share >= 20) return '🐋 Ballenas';
+    if ($share >= 5) return '🐬 Medianos';
+    return '🐟 Pequeños';
+}
+
+/**
+ * Resolve a market and store payouts, results, and reputation.
+ */
+function resolvePolymarket(PDO $conn, $id_market, $id_option_ganadora, $id_usuario_resuelve) {
+    ensurePolymarketTables($conn);
+
+    $conn->beginTransaction();
+    try {
+        $market_stmt = $conn->prepare("SELECT * FROM markets WHERE id_market = :id_market FOR UPDATE");
+        $market_stmt->execute([':id_market' => intval($id_market)]);
+        $market = $market_stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$market) {
+            throw new Exception('Mercado no encontrado');
+        }
+
+        $winner_stmt = $conn->prepare("SELECT titulo FROM market_options WHERE id_market = :id_market AND id_option = :id_option LIMIT 1");
+        $winner_stmt->execute([
+            ':id_market' => intval($id_market),
+            ':id_option' => intval($id_option_ganadora),
+        ]);
+        $winner_title = $winner_stmt->fetchColumn();
+        if (!$winner_title) {
+            throw new Exception('La opción ganadora no pertenece a este mercado');
+        }
+
+        if (!in_array($market['estado'], ['cerrado', 'abierto', 'silencioso'], true)) {
+            throw new Exception('El mercado no puede resolverse en su estado actual');
+        }
+
+        $bets_stmt = $conn->prepare("SELECT b.*, o.titulo AS opcion_titulo
+            FROM market_bets b
+            JOIN market_options o ON o.id_option = b.id_option
+            WHERE b.id_market = :id_market AND b.estado = 'validada'
+            ORDER BY b.id_bet ASC");
+        $bets_stmt->execute([':id_market' => intval($id_market)]);
+        $bets = $bets_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $pozo_total = 0;
+        $pozo_ganador = 0;
+        foreach ($bets as $bet) {
+            $pozo_total += intval($bet['ic_apostado']);
+            if (intval($bet['id_option']) === intval($id_option_ganadora)) {
+                $pozo_ganador += intval($bet['ic_apostado']);
+            }
+        }
+
+        $multiplicador = $pozo_ganador > 0 ? ($pozo_total / $pozo_ganador) : 0;
+        $turno_global = getCurrentTurn($conn);
+
+        $insert_result = $conn->prepare("INSERT INTO market_results
+            (id_market, id_bet, id_usuario, id_option, apuesta_ic, pozo_total_ic, pozo_ganador_ic, multiplicador, ganancia_ic, ganancia_neta_ic, opcion_ganadora_titulo, turno_global)
+            VALUES (:id_market, :id_bet, :id_usuario, :id_option, :apuesta_ic, :pozo_total_ic, :pozo_ganador_ic, :multiplicador, :ganancia_ic, :ganancia_neta_ic, :opcion_ganadora_titulo, :turno_global)");
+
+        $reputation_upsert = $conn->prepare("INSERT INTO market_reputation
+            (id_usuario, mercados_participados, mercados_ganados, mercados_perdidos, total_ic_apostado, total_ic_ganado, precision_pct)
+            VALUES (:id_usuario, :mercados_participados, :mercados_ganados, :mercados_perdidos, :total_ic_apostado, :total_ic_ganado, :precision_pct)
+            ON DUPLICATE KEY UPDATE
+                mercados_participados = mercados_participados + VALUES(mercados_participados),
+                mercados_ganados = mercados_ganados + VALUES(mercados_ganados),
+                mercados_perdidos = mercados_perdidos + VALUES(mercados_perdidos),
+                total_ic_apostado = total_ic_apostado + VALUES(total_ic_apostado),
+                total_ic_ganado = total_ic_ganado + VALUES(total_ic_ganado),
+                precision_pct = VALUES(precision_pct)");
+
+        $reputation_delta = [];
+
+        foreach ($bets as $bet) {
+            $es_ganadora = intval($bet['id_option']) === intval($id_option_ganadora);
+            $payout = $es_ganadora ? (int) round(intval($bet['ic_apostado']) * $multiplicador) : 0;
+            $profit = $payout - intval($bet['ic_apostado']);
+
+            $insert_result->execute([
+                ':id_market' => intval($id_market),
+                ':id_bet' => intval($bet['id_bet']),
+                ':id_usuario' => intval($bet['id_usuario']),
+                ':id_option' => intval($bet['id_option']),
+                ':apuesta_ic' => intval($bet['ic_apostado']),
+                ':pozo_total_ic' => $pozo_total,
+                ':pozo_ganador_ic' => $pozo_ganador,
+                ':multiplicador' => $multiplicador,
+                ':ganancia_ic' => $payout,
+                ':ganancia_neta_ic' => $profit,
+                ':opcion_ganadora_titulo' => $winner_title,
+                ':turno_global' => $turno_global,
+            ]);
+
+            if (!isset($reputation_delta[$bet['id_usuario']])) {
+                $reputation_delta[$bet['id_usuario']] = [
+                    'mercados_participados' => 0,
+                    'mercados_ganados' => 0,
+                    'mercados_perdidos' => 0,
+                    'total_ic_apostado' => 0,
+                    'total_ic_ganado' => 0,
+                ];
+            }
+
+            $reputation_delta[$bet['id_usuario']]['mercados_participados'] += 1;
+            $reputation_delta[$bet['id_usuario']]['mercados_ganados'] += $es_ganadora ? 1 : 0;
+            $reputation_delta[$bet['id_usuario']]['mercados_perdidos'] += $es_ganadora ? 0 : 1;
+            $reputation_delta[$bet['id_usuario']]['total_ic_apostado'] += intval($bet['ic_apostado']);
+            $reputation_delta[$bet['id_usuario']]['total_ic_ganado'] += $payout;
+        }
+
+        foreach ($reputation_delta as $id_usuario => $delta) {
+            $participados = $delta['mercados_participados'];
+            $ganados = $delta['mercados_ganados'];
+            $precision = $participados > 0 ? round(($ganados / $participados) * 100, 2) : 0;
+            $reputation_upsert->execute([
+                ':id_usuario' => intval($id_usuario),
+                ':mercados_participados' => $participados,
+                ':mercados_ganados' => $ganados,
+                ':mercados_perdidos' => $delta['mercados_perdidos'],
+                ':total_ic_apostado' => $delta['total_ic_apostado'],
+                ':total_ic_ganado' => $delta['total_ic_ganado'],
+                ':precision_pct' => $precision,
+            ]);
+        }
+
+        $update_market = $conn->prepare("UPDATE markets
+            SET estado = 'resuelto',
+                id_opcion_ganadora = :id_opcion_ganadora,
+                id_usuario_resuelve = :id_usuario_resuelve,
+                fecha_resolucion = NOW(),
+                fecha_cierre_real = COALESCE(fecha_cierre_real, NOW())
+            WHERE id_market = :id_market");
+        $update_market->execute([
+            ':id_opcion_ganadora' => intval($id_option_ganadora),
+            ':id_usuario_resuelve' => intval($id_usuario_resuelve),
+            ':id_market' => intval($id_market),
+        ]);
+
+        $conn->commit();
+        return [
+            'success' => true,
+            'pozo_total' => $pozo_total,
+            'pozo_ganador' => $pozo_ganador,
+            'multiplicador' => $multiplicador,
+            'bets' => count($bets),
+        ];
+    } catch (Throwable $e) {
+        if ($conn->inTransaction()) {
+            $conn->rollBack();
+        }
+        return [
+            'success' => false,
+            'error' => $e->getMessage(),
+        ];
+    }
+}
+
+/**
+ * Get country's IC production.
+ */
+function polymarket_get_country_ic_production(PDO $conn, $id_pais) {
+    if (!$id_pais) return 0;
+    
+    $focus_stmt = $conn->prepare("
+        SELECT e.multiplicador_ic
+        FROM paises p
+        LEFT JOIN enfoques e ON p.id_enfoque_activo = e.id_enfoque
+        WHERE p.id_pais = :id_pais
+        LIMIT 1
+    ");
+    $focus_stmt->execute([':id_pais' => $id_pais]);
+    $focus_mult = $focus_stmt->fetchColumn();
+    $focus_mult_val = ($focus_mult !== false && $focus_mult !== null) ? floatval($focus_mult) : null;
+
+    $prod_stmt = $conn->prepare("
+        SELECT ct.multiplicador, COALESCE(cv.cantidad, 0) AS cantidad
+        FROM cartilla_tipos ct
+        LEFT JOIN cartilla_valores cv ON cv.id_tipo = ct.id_tipo AND cv.id_pais = :id_pais
+        WHERE ct.tipo = 'produccion' AND ct.unidad_produccion = 'IC' AND ct.activo = 1
+    ");
+    $prod_stmt->execute([':id_pais' => $id_pais]);
+    $items = $prod_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $total_ic_production = 0;
+    foreach ($items as $item) {
+        $mult = ($focus_mult_val !== null) ? $focus_mult_val : floatval($item['multiplicador']);
+        $total_ic_production += intval($item['cantidad']) * $mult;
+    }
+    return intval($total_ic_production);
+}
